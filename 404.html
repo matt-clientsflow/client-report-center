@@ -16,6 +16,9 @@
   <body>
     <main aria-live="polite"><p>A privát riport betöltése folyamatban van…</p></main>
     <script>
+      window.addEventListener("hashchange", function () {
+        window.location.reload();
+      });
       (async function () {
         const fragment = window.location.hash.slice(1);
         const separator = fragment.indexOf(":");
