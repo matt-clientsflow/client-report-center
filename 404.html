@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+    <title>Privát riport</title>
+    <style>
+      body{display:grid;min-height:100vh;margin:0;place-items:center;background:#f5f1e7;color:#16231c;font:16px/1.5 Arial,sans-serif}
+      main{width:min(520px,calc(100% - 40px));padding:32px;border:1px solid #d9ddd8;border-radius:20px;background:#fffdf8;box-shadow:0 20px 60px rgba(21,55,39,.08)}
+      p{margin:0;color:#607067}
+    </style>
+  </head>
+  <body>
+    <main aria-live="polite"><p>A privát riport betöltése folyamatban van…</p></main>
+    <script>
+      (async function () {
+        const fragment = window.location.hash.slice(1);
+        const separator = fragment.indexOf(":");
+        const view = separator > 0 ? fragment.slice(0, separator) : "";
+        const token = separator > 0 ? fragment.slice(separator + 1) : "";
+        if (!["i", "c"].includes(view) || token.length < 32) throw new Error("invalid");
+        const response = await fetch("./payload-" + view + ".json", { cache: "no-store" });
+        if (!response.ok) throw new Error("missing");
+        const payload = await response.json();
+        const keyBytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+        const key = await crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["decrypt"]);
+        const fromBase64 = value => Uint8Array.from(atob(value), character => character.charCodeAt(0));
+        const decrypted = await crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: fromBase64(payload.iv) },
+          key,
+          fromBase64(payload.ciphertext)
+        );
+        const html = new TextDecoder().decode(decrypted);
+        document.open();
+        document.write(html);
+        document.close();
+      })().catch(function () {
+        document.querySelector("main").innerHTML = "<p>Ez a privát link érvénytelen vagy lejárt.</p>";
+      });
+    </script>
+  </body>
+</html>
