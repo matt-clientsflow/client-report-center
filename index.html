@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow,noarchive">
     <meta name="referrer" content="no-referrer">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
     <title>Privát riport</title>
-    <style>
+    <style id="release-shell-style">
       body{display:grid;min-height:100vh;margin:0;place-items:center;background:#f5f1e7;color:#16231c;font:16px/1.5 Arial,sans-serif}
       main{width:min(520px,calc(100% - 40px));padding:32px;border:1px solid #d9ddd8;border-radius:20px;background:#fffdf8;box-shadow:0 20px 60px rgba(21,55,39,.08)}
       p{margin:0;color:#607067}
@@ -37,9 +37,19 @@
           fromBase64(payload.ciphertext)
         );
         const html = new TextDecoder().decode(decrypted);
-        document.open();
-        document.write(html);
-        document.close();
+        const report = new DOMParser().parseFromString(html, "text/html");
+        const reportStyles = Array.from(report.querySelectorAll("style"));
+        document.getElementById("release-shell-style").remove();
+        for (const style of reportStyles) {
+          const copy = document.createElement("style");
+          copy.textContent = style.textContent;
+          document.head.appendChild(copy);
+        }
+        document.documentElement.lang = report.documentElement.lang || "hu";
+        document.documentElement.className = report.documentElement.className;
+        document.body.className = report.body.className;
+        document.title = report.title || "Privát riport";
+        document.body.innerHTML = report.body.innerHTML;
       })().catch(function () {
         document.querySelector("main").innerHTML = "<p>Ez a privát link érvénytelen vagy lejárt.</p>";
       });
